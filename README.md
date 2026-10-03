@@ -16,14 +16,10 @@ Aplikasi web internal untuk Tiga Putra Supplier: nota penjualan, barang masuk, s
 - **Laporan**: penjualan, HPP, laba kotor/bersih per hari, bulan, barang, kategori, pelanggan, gudang, plus export Excel.
 
 ## Setup
+Website **tanpa login** (permintaan pemilik): siapa pun yang tahu alamat https://notatigaputra.vercel.app bisa membuka dan mengubah data.
 
 ### 1. Supabase (project `tiga-putra`)
-Tabel, data awal, dan sebagian besar fungsi sudah terpasang. Sisanya:
-1. **Authentication → Users → Add user**: buat akun login (email + password).
-2. **Authentication → Sign In / Providers**: matikan *Allow new users to sign up* (aplikasi internal).
-3. **SQL Editor → New query**: tempel isi `supabase/JALANKAN_DI_SQL_EDITOR.sql`, lalu klik **Run**. File ini memasang fungsi simpan nota/barang masuk dan menjadikan akun di langkah 1 sebagai staff.
-
-Pengguna berikutnya: buat akunnya di Authentication, lalu tambahkan emailnya di menu **Pengaturan → Pengguna**.
+Semua tabel, fungsi, dan data awal sudah terpasang (`supabase/migrations/`). Tidak ada langkah manual.
 
 ### 2. Vercel
 Environment variables (sudah ada nilai default di kode, jadi opsional):

@@ -22,7 +22,7 @@ export default function NotaDetail() {
   const { data, error, loading, reload } = useAsync(async () => {
     const [s, it, pay, cust] = await Promise.all([
       sb().from("sales").select("*").eq("id", id).single(),
-      sb().from("sale_items").select("*").eq("sale_id", id).order("id"),
+      sb().from("sale_items").select("*").eq("sale_id", id).eq("active", true).order("id"),
       sb().from("payments").select("*").eq("sale_id", id).order("date"),
       sb().from("sales").select("customers(phone)").eq("id", id).single(),
     ]);

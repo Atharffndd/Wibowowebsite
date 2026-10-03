@@ -184,7 +184,7 @@ function Movements({ products }: { products: Product[] }) {
   const byId = useMemo(() => Object.fromEntries(products.map((p) => [p.id, p])), [products]);
 
   const { data, loading, error } = useAsync(async () => {
-    let qy = sb().from("stock_movements").select("*, products(name, base_unit)").gte("date", from).lte("date", to).order("date", { ascending: false }).order("id", { ascending: false }).limit(1000);
+    let qy = sb().from("stock_movements").select("*, products(name, base_unit)").eq("void", false).gte("date", from).lte("date", to).order("date", { ascending: false }).order("id", { ascending: false }).limit(1000);
     if (wh) qy = qy.eq("warehouse_id", wh);
     if (type) qy = qy.eq("type", type);
     const { data, error } = await qy;

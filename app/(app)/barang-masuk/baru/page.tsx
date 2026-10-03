@@ -52,7 +52,7 @@ function PurchaseForm() {
         if (editId) {
           const [{ data: h, error: e1 }, { data: its, error: e2 }] = await Promise.all([
             sb().from("purchases").select("*").eq("id", editId).single(),
-            sb().from("purchase_items").select("*").eq("purchase_id", editId),
+            sb().from("purchase_items").select("*").eq("purchase_id", editId).eq("active", true),
           ]);
           if (e1 || e2) throw e1 || e2;
           const pu = h as Purchase;

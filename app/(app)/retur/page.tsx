@@ -29,14 +29,14 @@ function ReturPage() {
   const [open, setOpen] = useState(Boolean(saleId || purchaseId));
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const { data, error } = await sb().from("returns").select("*, sales(number), purchases(number)").order("date", { ascending: false }).limit(300);
+    const { data, error } = await sb().from("returns").select("*, sales(number), purchases(number)").eq("status", "aktif").order("date", { ascending: false }).limit(300);
     if (error) throw error;
     return data as Ret[];
   }, []);
 
   async function del(r: Ret) {
-    if (!confirm(`Hapus retur ${r.number}? Stok dan saldo akan dikembalikan.`)) return;
-    const { error } = await sb().rpc("delete_return", { p_id: r.id });
+    if (!confirm(`Batalkan retur ${r.number}? Stok dan saldo akan dikembalikan.`)) return;
+    const { error } = await sb().rpc("void_return", { p_id: r.id });
     if (error) alert(error.message);
     reload();
   }
@@ -88,7 +88,7 @@ function ReturPage() {
                   <td className="num">{num(r.total)}</td>
                   <td className="text-right">
                     <Button variant="ghost" size="sm" onClick={() => del(r)}>
-                      Hapus
+                      Batalkan
                     </Button>
                   </td>
                 </tr>
@@ -134,7 +134,7 @@ function ReturnModal({ saleId, purchaseId, onClose, onSaved }: { saleId: string 
     loadProducts().then(setProducts);
     (async () => {
       if (saleId) {
-        const [{ data: s }, { data: its }] = await Promise.all([sb().from("sales").select("*").eq("id", saleId).single(), sb().from("sale_items").select("*").eq("sale_id", saleId)]);
+        const [{ data: s }, { data: its }] = await Promise.all([sb().from("sales").select("*").eq("id", saleId).single(), sb().from("sale_items").select("*").eq("sale_id", saleId).eq("active", true)]);
         if (s) {
           setParty(s.customer_name);
           setWh(s.warehouse_id);
@@ -142,7 +142,7 @@ function ReturnModal({ saleId, purchaseId, onClose, onSaved }: { saleId: string 
         }
         setItemsFromDoc(its ?? []);
       } else if (purchaseId) {
-        const [{ data: p }, { data: its }] = await Promise.all([sb().from("purchases").select("*").eq("id", purchaseId).single(), sb().from("purchase_items").select("*").eq("purchase_id", purchaseId)]);
+        const [{ data: p }, { data: its }] = await Promise.all([sb().from("purchases").select("*").eq("id", purchaseId).single(), sb().from("purchase_items").select("*").eq("purchase_id", purchaseId).eq("active", true)]);
         if (p) {
           setParty(p.supplier_name ?? "");
           setWh(p.warehouse_id);

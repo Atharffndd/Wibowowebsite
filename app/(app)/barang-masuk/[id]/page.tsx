@@ -21,7 +21,7 @@ export default function PurchaseDetail() {
   const { data, error, loading, reload } = useAsync(async () => {
     const [h, it, pay] = await Promise.all([
       sb().from("purchases").select("*").eq("id", id).single(),
-      sb().from("purchase_items").select("*").eq("purchase_id", id),
+      sb().from("purchase_items").select("*").eq("purchase_id", id).eq("active", true),
       sb().from("payments").select("*").eq("purchase_id", id).order("date"),
     ]);
     if (h.error) throw h.error;

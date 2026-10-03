@@ -60,7 +60,7 @@ function NotaForm() {
         if (editId) {
           const [{ data: s, error: e1 }, { data: its, error: e2 }] = await Promise.all([
             sb().from("sales").select("*").eq("id", editId).single(),
-            sb().from("sale_items").select("*").eq("sale_id", editId),
+            sb().from("sale_items").select("*").eq("sale_id", editId).eq("active", true),
           ]);
           if (e1 || e2) throw e1 || e2;
           const sale = s as Sale;
@@ -111,6 +111,7 @@ function NotaForm() {
         sb()
           .from("sale_items")
           .select("product_id, unit, price, sales!inner(date, customer_id, status)")
+          .eq("active", true)
           .eq("sales.customer_id", customerId)
           .eq("sales.status", "aktif")
           .order("date", { ascending: false, referencedTable: "sales" })
