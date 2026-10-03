@@ -1,12 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Session } from "@supabase/supabase-js";
 import { sb } from "@/lib/supabase";
 import type { Settings, Warehouse } from "@/lib/types";
 
 type Ctx = {
-  session: Session;
   settings: Settings;
   warehouses: Warehouse[];
   reloadMaster: () => Promise<void>;
@@ -34,7 +32,7 @@ const DEFAULT_SETTINGS: Settings = {
   signature_url: null,
 };
 
-export function AppProvider({ session, children }: { session: Session; children: ReactNode }) {
+export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
@@ -52,5 +50,5 @@ export function AppProvider({ session, children }: { session: Session; children:
   }, [reloadMaster]);
 
   if (!settings) return <div className="p-10 text-center text-muted">Memuat…</div>;
-  return <AppCtx.Provider value={{ session, settings, warehouses, reloadMaster }}>{children}</AppCtx.Provider>;
+  return <AppCtx.Provider value={{ settings, warehouses, reloadMaster }}>{children}</AppCtx.Provider>;
 }

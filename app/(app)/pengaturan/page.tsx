@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { sb, errMsg } from "@/lib/supabase";
-import { useAsync } from "@/lib/hooks";
 import type { Bank, Settings } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
 import { Button, Card, ErrorBox, Field, Input, NumInput, PageHeader, Table, Textarea } from "@/components/ui";
 
 export default function PengaturanPage() {
-  const { settings, reloadMaster, session } = useApp();
+  const { settings, reloadMaster } = useApp();
   const [f, setF] = useState<Settings>({ ...settings, banks: settings.banks.map((b) => ({ ...b })) });
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +52,7 @@ export default function PengaturanPage() {
 
   return (
     <>
-      <PageHeader title="Pengaturan" subtitle="Data perusahaan yang tampil di nota, rekening, PPN, tanda tangan, dan pengguna." />
+      <PageHeader title="Pengaturan" subtitle="Data perusahaan yang tampil di nota, rekening, PPN, dan tanda tangan." />
       <div className="grid xl:grid-cols-2 gap-4 items-start">
         <Card title="Kop nota">
           <div className="space-y-3">
@@ -143,7 +142,6 @@ export default function PengaturanPage() {
           </div>
         </Card>
 
-        <StaffCard myEmail={session.user.email ?? ""} />
       </div>
       <div className="sticky bottom-0 mt-4 bg-page/90 backdrop-blur py-3 flex items-center gap-3">
         <Button onClick={save} disabled={busy}>
@@ -153,58 +151,5 @@ export default function PengaturanPage() {
         <ErrorBox error={error} />
       </div>
     </>
-  );
-}
-
-function StaffCard({ myEmail }: { myEmail: string }) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const { data, reload } = useAsync(async () => {
-    const { data, error } = await sb().from("staff").select("*").order("created_at");
-    if (error) throw error;
-    return data as { user_id: string; email: string; name: string | null }[];
-  }, []);
-
-  async function add() {
-    setError(null);
-    const { error } = await sb().rpc("add_staff", { p_email: email.trim() });
-    if (error) return setError(error.message);
-    setEmail("");
-    reload();
-  }
-  async function remove(id: string, em: string) {
-    if (em === myEmail) return alert("Tidak bisa menghapus akun sendiri.");
-    if (!confirm(`Cabut akses ${em}?`)) return;
-    await sb().from("staff").delete().eq("user_id", id);
-    reload();
-  }
-
-  return (
-    <Card title="Pengguna (staff)">
-      <Table>
-        <tbody>
-          {data?.map((s) => (
-            <tr key={s.user_id}>
-              <td>{s.email}</td>
-              <td className="text-right">
-                {s.email !== myEmail && (
-                  <Button variant="ghost" size="sm" onClick={() => remove(s.user_id, s.email)}>
-                    Cabut akses
-                  </Button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-      <div className="flex gap-2 mt-3">
-        <Input placeholder="email pengguna baru" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Button onClick={add}>Beri akses</Button>
-      </div>
-      <ErrorBox error={error} />
-      <p className="text-xs text-muted mt-2">
-        Langkah menambah pengguna: (1) buat akun di Supabase → Authentication → Users → <i>Add user</i> (email + password), lalu (2) masukkan emailnya di sini dan klik &quot;Beri akses&quot;.
-      </p>
-    </Card>
   );
 }

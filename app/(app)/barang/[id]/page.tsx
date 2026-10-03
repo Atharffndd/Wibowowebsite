@@ -20,7 +20,7 @@ export default function ProductDetail() {
     const [p, st, mv, ph, cp] = await Promise.all([
       sb().from("v_products").select("*, product_units(*)").eq("id", id).single(),
       sb().from("v_stock").select("*").eq("product_id", id),
-      sb().from("stock_movements").select("*").eq("product_id", id).order("date", { ascending: false }).order("id", { ascending: false }).limit(200),
+      sb().from("stock_movements").select("*").eq("product_id", id).eq("void", false).order("date", { ascending: false }).order("id", { ascending: false }).limit(200),
       sb().from("price_history").select("*").eq("product_id", id).order("changed_at", { ascending: false }).limit(50),
       sb().from("customer_prices").select("*, customers(name)").eq("product_id", id),
     ]);

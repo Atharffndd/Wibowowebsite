@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { sb } from "@/lib/supabase";
 import { AppProvider } from "./AppContext";
-import { Button, cx } from "./ui";
+import { cx } from "./ui";
 
 const NAV: { group: string; items: { href: string; label: string; icon: string }[] }[] = [
   { group: "", items: [{ href: "/", label: "Dashboard", icon: "▦" }] },
@@ -40,44 +38,15 @@ const NAV: { group: string; items: { href: string; label: string; icon: string }
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const path = usePathname();
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
-  const [staff, setStaff] = useState<boolean | undefined>(undefined);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    sb().auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: sub } = sb().auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (session === null) router.replace("/login");
-    if (session) sb().rpc("is_staff").then(({ data }) => setStaff(Boolean(data)));
-  }, [session, router]);
-
   useEffect(() => setOpen(false), [path]);
-
-  if (session === undefined || (session && staff === undefined)) return <div className="p-10 text-center text-muted">Memuat…</div>;
-  if (!session) return null;
-  if (!staff)
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white border border-line rounded-xl p-6 max-w-md text-center">
-          <h1 className="font-bold text-lg mb-2">Akun belum diizinkan</h1>
-          <p className="text-sm text-muted mb-4">
-            Akun <b>{session.user.email}</b> belum terdaftar sebagai staff. Minta admin menambahkan akun ini di menu Pengaturan.
-          </p>
-          <Button variant="secondary" onClick={() => sb().auth.signOut()}>Keluar</Button>
-        </div>
-      </div>
-    );
 
   const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
   return (
-    <AppProvider session={session}>
+    <AppProvider>
       <div className="min-h-screen md:flex">
         {/* Topbar mobile */}
         <div className="md:hidden no-print sticky top-0 z-30 flex items-center justify-between bg-white border-b border-line px-4 py-3">
@@ -116,10 +85,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </div>
             ))}
           </nav>
-          <div className="border-t border-line p-3 text-xs text-muted">
-            <div className="truncate mb-2">{session.user.email}</div>
-            <Button variant="secondary" size="sm" className="w-full" onClick={() => sb().auth.signOut()}>Keluar</Button>
-          </div>
+          <div className="border-t border-line p-3 text-xs text-muted">Tiga Putra Supplier · Rempoah, Baturaden</div>
         </aside>
         {open && <div className="fixed inset-0 z-30 bg-black/30 md:hidden no-print" onClick={() => setOpen(false)} />}
 
