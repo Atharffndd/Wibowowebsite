@@ -117,7 +117,13 @@ function PurchaseForm() {
 
   return (
     <>
-      <PageHeader title={editId ? `Ubah Barang Masuk ${number}` : "Barang Masuk Baru"} subtitle="Stok gudang bertambah & HPP rata-rata tertimbang diperbarui otomatis." />
+      <PageHeader title={editId ? `Koreksi Barang Masuk ${number}` : "Barang Masuk Baru"} subtitle="Stok gudang bertambah & HPP rata-rata tertimbang diperbarui otomatis." />
+      {editId && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <b>Perhatian:</b> koreksi ini <b>mengganti</b> jumlah & gudang pada {number}, bukan menambah. Jika barang datang lagi, batalkan koreksi ini dan buat{" "}
+          <a href="/barang-masuk/baru" className="font-semibold underline">Barang Masuk baru</a>. Koreksi yang membuat stok gudang menjadi minus akan ditolak.
+        </div>
+      )}
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <Card>

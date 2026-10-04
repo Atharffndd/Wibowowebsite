@@ -24,6 +24,7 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 - Tidak ingin mengganti password apa pun.
 - Mutasi stok/nota **tidak pernah dihapus**: ubah/batal = tandai `stock_movements.void`, `sale_items.active` / `purchase_items.active = false`, `sales.status = 'batal'`, retur dibatalkan via `void_return`. Semua query item harus memfilter `active = true` dan mutasi `void = false`.
   (Catatan teknis: Supabase MCP menahan fungsi SQL berisi `delete` — tanpa delete juga desain yang lebih baik untuk audit.)
+- **Stok per gudang tidak boleh minus**: constraint trigger `stock_nonnegative` (deferred) menolak transaksi yang mengurangi stok gudang di bawah 0 (migrasi 0003). Barang yang datang lagi = Barang Masuk baru, bukan koreksi BM lama.
 
 ## Teknis
 - Next.js 16 (App Router, semua halaman client component) + Tailwind 4 + `@supabase/supabase-js`, recharts, exceljs.
