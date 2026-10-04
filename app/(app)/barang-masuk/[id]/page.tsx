@@ -53,9 +53,14 @@ export default function PurchaseDetail() {
           </div>
         </div>
         {p.status === "aktif" && (
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => router.push(`/barang-masuk/baru?id=${p.id}`)}>
-              Ubah
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => router.push(`/barang-masuk/baru`)}>+ Barang masuk baru</Button>
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/barang-masuk/baru?id=${p.id}`)}
+              title="Hanya untuk membetulkan salah input. Barang yang datang lagi dicatat sebagai Barang masuk baru."
+            >
+              Koreksi data
             </Button>
             <Button variant="secondary" onClick={() => router.push(`/retur?purchase=${p.id}`)}>
               Retur ke supplier

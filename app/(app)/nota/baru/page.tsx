@@ -204,7 +204,7 @@ function NotaForm() {
     <>
       <PageHeader
         title={editId ? `Ubah Nota ${number}` : "Nota Baru"}
-        subtitle={editId ? "Perubahan akan memperbarui stok otomatis." : `Nomor otomatis: ${settings.invoice_prefix}/${date.slice(0, 4)}/${date.slice(5, 7)}/xxxx`}
+        subtitle={editId ? "Perubahan akan memperbarui stok otomatis. Stok gudang tidak boleh minus." : `Nomor otomatis: ${settings.invoice_prefix}/${date.slice(0, 4)}/${date.slice(5, 7)}/xxxx`}
       />
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
