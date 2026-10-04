@@ -1,10 +1,36 @@
 "use client";
 
-import type { Sale, SaleItem, Settings } from "@/lib/types";
+import type { Sale, SaleItem, Settings, Warehouse } from "@/lib/types";
 import { num, qty, tanggal } from "@/lib/format";
 
 /** Tampilan nota — mengikuti format nota contoh (cetak A4/A5). TTD + paraf selalu tampil. */
-export function Invoice({ sale, items, settings }: { sale: Sale; items: SaleItem[]; settings: Settings }) {
+type Row = { key: string; name: string; unit: string; price: number; qty: number; subtotal: number; sources: { wh: string; qty: number }[] };
+
+/** Gabungkan baris barang yang sama (nama, satuan, harga sama) — mis. diambil dari dua gudang */
+function mergeRows(items: SaleItem[], sale: Sale): Row[] {
+  const out: Row[] = [];
+  const byKey = new Map<string, Row>();
+  for (const it of items) {
+    const key = `${it.product_id}|${it.name}|${it.unit}|${Number(it.price)}`;
+    const wh = it.warehouse_id ?? sale.warehouse_id;
+    let r = byKey.get(key);
+    if (!r) {
+      r = { key, name: it.name, unit: it.unit, price: Number(it.price), qty: 0, subtotal: 0, sources: [] };
+      byKey.set(key, r);
+      out.push(r);
+    }
+    r.qty += Number(it.qty);
+    r.subtotal += Number(it.subtotal);
+    const src = r.sources.find((s) => s.wh === wh);
+    if (src) src.qty += Number(it.qty);
+    else r.sources.push({ wh, qty: Number(it.qty) });
+  }
+  return out;
+}
+
+export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale; items: SaleItem[]; settings: Settings; warehouses?: Warehouse[] }) {
+  const rows = mergeRows(items, sale);
+  const whName = (id: string) => warehouses.find((w) => w.id === id)?.name ?? "";
   const sig = settings.signature_url || "/ttd.webp";
   const showTax = Number(sale.tax_amount) > 0 || Number(sale.tax_percent) > 0;
   const hasExtras = Number(sale.discount) > 0 || Number(sale.shipping) > 0 || showTax;
@@ -47,10 +73,18 @@ export function Invoice({ sale, items, settings }: { sale: Sale; items: SaleItem
           </tr>
         </thead>
         <tbody>
-          {items.map((it, i) => (
-            <tr key={it.id} className="align-top">
+          {rows.map((it, i) => (
+            <tr key={it.key} className="align-top">
               <td className="py-1.5 mono">{i + 1}</td>
-              <td className="py-1.5">{it.name}</td>
+              <td className="py-1.5">
+                {it.name}
+                {/* info gudang hanya untuk internal — tidak ikut dicetak */}
+                {warehouses.length > 0 && (
+                  <div className="no-print text-[11px] text-brand">
+                    {it.sources.map((s) => (it.sources.length > 1 ? `${whName(s.wh)}: ${qty(s.qty)}` : whName(s.wh))).join(" · ")}
+                  </div>
+                )}
+              </td>
               <td className="py-1.5 text-right mono">{qty(it.qty)}</td>
               <td className="py-1.5 pl-2">{it.unit}</td>
               <td className="py-1.5 text-right mono">{num(it.price)}</td>

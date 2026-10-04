@@ -50,3 +50,14 @@ export async function loadStockMap(warehouseId: string): Promise<Record<string, 
   );
   return Object.fromEntries(rows.map((r) => [r.product_id, Number(r.qty)]));
 }
+
+/** Stok semua produk di semua gudang: stock[productId][warehouseId] (satuan dasar) */
+export type StockAll = Record<string, Record<string, number>>;
+export async function loadStockAll(): Promise<StockAll> {
+  const rows = await fetchAll<{ product_id: string; warehouse_id: string; qty: number }>((from, to) =>
+    sb().from("v_stock").select("product_id, warehouse_id, qty").range(from, to),
+  );
+  const out: StockAll = {};
+  for (const r of rows) (out[r.product_id] ??= {})[r.warehouse_id] = Number(r.qty);
+  return out;
+}

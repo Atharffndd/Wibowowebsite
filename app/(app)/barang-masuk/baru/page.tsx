@@ -3,11 +3,11 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sb, errMsg } from "@/lib/supabase";
-import { loadProducts, loadSuppliers } from "@/lib/hooks";
+import { loadProducts, loadStockAll, loadSuppliers, type StockAll } from "@/lib/hooks";
 import { num, rp, today } from "@/lib/format";
 import type { LineItem, Product, Purchase, Supplier } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
-import { ItemsEditor, itemsPayload, itemsSubtotal, newKey } from "@/components/ItemsEditor";
+import { ItemsEditor, addBack, itemsPayload, itemsSubtotal, newKey } from "@/components/ItemsEditor";
 import { Button, Card, ErrorBox, Field, Input, Loading, NumInput, PageHeader, Select, Textarea } from "@/components/ui";
 
 export default function Page() {
@@ -32,7 +32,7 @@ function PurchaseForm() {
   const [supplierId, setSupplierId] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [supplierRef, setSupplierRef] = useState("");
-  const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? "");
+  const [stockAll, setStockAll] = useState<StockAll>({});
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<LineItem[]>([]);
@@ -46,9 +46,10 @@ function PurchaseForm() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, s] = await Promise.all([loadProducts(), loadSuppliers()]);
+        const [p, s, st] = await Promise.all([loadProducts(), loadSuppliers(), loadStockAll()]);
         setProducts(p);
         setSuppliers(s);
+        setStockAll(st);
         if (editId) {
           const [{ data: h, error: e1 }, { data: its, error: e2 }] = await Promise.all([
             sb().from("purchases").select("*").eq("id", editId).single(),
@@ -61,14 +62,23 @@ function PurchaseForm() {
           setSupplierId(pu.supplier_id ?? "");
           setSupplierName(pu.supplier_name ?? "");
           setSupplierRef(pu.supplier_ref ?? "");
-          setWarehouseId(pu.warehouse_id);
           setDueDate(pu.due_date ?? "");
           setNotes(pu.notes ?? "");
           setDiscount(Number(pu.discount));
           setShipping(Number(pu.shipping));
-          setItems(
-            (its as LineItem[]).map((it) => ({ key: newKey(), product_id: it.product_id, name: it.name, unit: it.unit, factor: Number(it.factor), qty: Number(it.qty), price: Number(it.price) })),
-          );
+          const rows = (its as (LineItem & { warehouse_id: string | null })[]).map((it) => ({
+            key: newKey(),
+            product_id: it.product_id,
+            name: it.name,
+            unit: it.unit,
+            factor: Number(it.factor),
+            qty: Number(it.qty),
+            price: Number(it.price),
+            warehouse_id: it.warehouse_id ?? pu.warehouse_id,
+          }));
+          setItems(rows);
+          // tampilkan stok tanpa barang masuk ini (yang akan diganti oleh koreksi)
+          setStockAll(addBack(st, rows, -1));
         }
         setReady(true);
       } catch (e) {
@@ -88,7 +98,6 @@ function PurchaseForm() {
 
   async function save() {
     setError(null);
-    if (!warehouseId) return setError("Pilih gudang.");
     if (itemsPayload(items).length === 0) return setError("Tambahkan minimal 1 barang.");
     setBusy(true);
     const { data, error } = await sb().rpc("save_purchase", {
@@ -98,7 +107,6 @@ function PurchaseForm() {
         supplier_id: supplierId || null,
         supplier_name: supplierName || null,
         supplier_ref: supplierRef || null,
-        warehouse_id: warehouseId,
         due_date: dueDate || null,
         notes: notes || null,
         discount,
@@ -155,15 +163,6 @@ function PurchaseForm() {
               <Field label="Tanggal">
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </Field>
-              <Field label="Masuk ke gudang">
-                <Select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
             </div>
           </Card>
           <Card title="Barang">
@@ -172,6 +171,8 @@ function PurchaseForm() {
               setItems={setItems}
               products={products}
               priceFor={priceFor}
+              warehouses={warehouses}
+              stockAll={stockAll}
               priceLabel="Harga beli"
               hint={(it) => {
                 const p = products.find((x) => x.id === it.product_id);

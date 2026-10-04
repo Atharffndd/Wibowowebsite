@@ -32,6 +32,7 @@ export default function PurchaseDetail() {
   if (error || !data) return <ErrorBox error={error ?? "Tidak ditemukan"} />;
   const { p, items, payments } = data;
   const remaining = balance(p);
+  const whName = (id: string) => warehouses.find((w) => w.id === id)?.name ?? "-";
 
   async function cancel() {
     if (!confirm(`Batalkan ${p.number}? Stok yang masuk akan dikurangi kembali.`)) return;
@@ -77,13 +78,14 @@ export default function PurchaseDetail() {
             <Info label="Tanggal" value={tanggal(p.date)} />
             <Info label="Supplier" value={p.supplier_name || "-"} />
             <Info label="No. faktur supplier" value={p.supplier_ref || "-"} />
-            <Info label="Gudang" value={warehouses.find((w) => w.id === p.warehouse_id)?.name ?? "-"} />
+            <Info label="Gudang" value={[...new Set(items.map((it) => it.warehouse_id ?? p.warehouse_id))].map(whName).join(", ") || "-"} />
           </div>
           <Table>
             <thead>
               <tr>
                 <th>#</th>
                 <th>Barang</th>
+                <th>Gudang</th>
                 <th className="text-right">Jumlah</th>
                 <th>Satuan</th>
                 <th className="text-right">Harga beli</th>
@@ -95,6 +97,7 @@ export default function PurchaseDetail() {
                 <tr key={it.id}>
                   <td>{i + 1}</td>
                   <td>{it.name}</td>
+                  <td>{whName(it.warehouse_id ?? p.warehouse_id)}</td>
                   <td className="num">{qty(it.qty)}</td>
                   <td>{it.unit}</td>
                   <td className="num">{num(it.price)}</td>
@@ -105,18 +108,18 @@ export default function PurchaseDetail() {
             <tfoot className="font-medium">
               {Number(p.discount) > 0 && (
                 <tr>
-                  <td colSpan={5} className="text-right">Diskon</td>
+                  <td colSpan={6} className="text-right">Diskon</td>
                   <td className="num">-{num(p.discount)}</td>
                 </tr>
               )}
               {Number(p.shipping) > 0 && (
                 <tr>
-                  <td colSpan={5} className="text-right">Ongkir</td>
+                  <td colSpan={6} className="text-right">Ongkir</td>
                   <td className="num">{num(p.shipping)}</td>
                 </tr>
               )}
               <tr className="font-bold">
-                <td colSpan={5} className="text-right">TOTAL</td>
+                <td colSpan={6} className="text-right">TOTAL</td>
                 <td className="num">{num(p.total)}</td>
               </tr>
             </tfoot>
