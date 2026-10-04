@@ -12,7 +12,7 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 ## Data bisnis
 - Tiga Putra — Jl. Brigade, Dusun II, Rempoah, Kec. Baturaden — HP 0878-3720-7971
 - Rekening A.N. **Muhammad Rizqy**: BCA 3580801659, BNI 1923710765
-- Gudang: **Gudang 1-P** dan **Gudang 2-R**
+- Gudang: **Gudang 1-P** dan **Gudang 2-R**. Gudang dipilih **per barang** (default gudang pertama = 1-P) di nota, barang masuk, dan retur; satu barang dari 2 gudang = 2 baris. Jika stok kurang: tetap gudang pilihan + peringatan merah (tidak pindah otomatis). Nota cetak **tidak** menampilkan gudang dan menggabungkan baris yang sama (nama/satuan/harga).
 - Nomor nota `INV/YYYY/MM/NNNN` (urut, reset tiap bulan); barang masuk `BM/…`, retur `RJ/…` / `RB/…`
 - PPN belum dipakai (tersedia, default mati). HPP: **rata-rata tertimbang**.
 - Harga bisa beda per pelanggan, per hari, grosir/eceran. Satuan ganda (dus, pcs, kg, …) dengan konversi.

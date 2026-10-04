@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { LineItem, Product } from "@/lib/types";
+import type { LineItem, Product, Warehouse } from "@/lib/types";
+import type { StockAll } from "@/lib/hooks";
 import { num, qty as fq, rp } from "@/lib/format";
 import { Button, NumInput, Select, cx } from "./ui";
 
@@ -91,7 +92,9 @@ export function ItemsEditor({
   setItems,
   products,
   priceFor,
-  stock,
+  warehouses,
+  stockAll,
+  checkStock = false,
   priceLabel = "Harga",
   hint,
 }: {
@@ -99,17 +102,30 @@ export function ItemsEditor({
   setItems: (f: (items: LineItem[]) => LineItem[]) => void;
   products: Product[];
   priceFor: PriceFn;
-  stock?: Record<string, number>;
+  /** Daftar gudang; barang baru otomatis memakai gudang pertama (Gudang 1-P) */
+  warehouses: Warehouse[];
+  /** stockAll[productId][warehouseId] dalam satuan dasar */
+  stockAll?: StockAll;
+  /** true = barang keluar (nota, retur pembelian): tandai merah jika stok gudang kurang */
+  checkStock?: boolean;
   priceLabel?: string;
   hint?: (it: LineItem) => React.ReactNode;
 }) {
   const byId = useMemo(() => Object.fromEntries(products.map((p) => [p.id, p])), [products]);
+  const defaultWh = warehouses[0]?.id ?? "";
+
+  // Total kebutuhan per barang per gudang (baris ganda dijumlahkan)
+  const needBy = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const it of items) m[`${it.product_id}|${it.warehouse_id}`] = (m[`${it.product_id}|${it.warehouse_id}`] ?? 0) + it.qty * it.factor;
+    return m;
+  }, [items]);
 
   async function add(p: Product) {
     const unit = p.base_unit;
     const u = p.product_units?.find((x) => x.unit === unit);
     const price = await priceFor(p, unit);
-    setItems((its) => [...its, { key: newKey(), product_id: p.id, name: p.name, unit, factor: Number(u?.factor ?? 1), qty: 1, price }]);
+    setItems((its) => [...its, { key: newKey(), product_id: p.id, name: p.name, unit, factor: Number(u?.factor ?? 1), qty: 1, price, warehouse_id: defaultWh }]);
   }
 
   async function changeUnit(it: LineItem, unit: string) {
@@ -120,6 +136,7 @@ export function ItemsEditor({
   }
 
   const update = (key: string, patch: Partial<LineItem>) => setItems((its) => its.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  const whCode = (id: string) => warehouses.find((w) => w.id === id)?.code ?? "?";
 
   return (
     <div className="space-y-3">
@@ -131,6 +148,7 @@ export function ItemsEditor({
               <tr>
                 <th className="w-8">#</th>
                 <th>Nama barang</th>
+                <th className="w-36">Gudang</th>
                 <th className="w-28 text-right">Jumlah</th>
                 <th className="w-28">Satuan</th>
                 <th className="w-36 text-right">{priceLabel}</th>
@@ -142,8 +160,10 @@ export function ItemsEditor({
               {items.map((it, i) => {
                 const p = byId[it.product_id];
                 const units = p?.product_units?.length ? p.product_units : [{ unit: it.unit, factor: it.factor }];
-                const avail = stock ? stock[it.product_id] ?? 0 : undefined;
-                const need = it.qty * it.factor;
+                const st = stockAll?.[it.product_id] ?? {};
+                const avail = st[it.warehouse_id] ?? 0;
+                const need = needBy[`${it.product_id}|${it.warehouse_id}`] ?? 0;
+                const short = checkStock && stockAll !== undefined && need > avail;
                 return (
                   <tr key={it.key}>
                     <td className="text-muted">{i + 1}</td>
@@ -154,19 +174,35 @@ export function ItemsEditor({
                         className="w-full min-w-40 bg-transparent border-b border-transparent focus:border-brand focus:outline-none"
                       />
                       <div className="text-xs text-muted flex flex-wrap gap-x-3">
-                        {avail !== undefined && (
-                          <span className={cx(need > avail && "text-red-600 font-medium")}>
-                            stok gudang: {fq(avail)} {p?.base_unit}
-                            {need > avail && " (kurang)"}
+                        {stockAll !== undefined && (
+                          <span>
+                            stok:{" "}
+                            {warehouses.map((w, j) => (
+                              <span key={w.id} className={cx(w.id === it.warehouse_id && "font-semibold text-ink", w.id === it.warehouse_id && short && "text-red-600")}>
+                                {j > 0 && " · "}
+                                {w.code} {fq(st[w.id] ?? 0)}
+                              </span>
+                            ))}{" "}
+                            {p?.base_unit}
                           </span>
                         )}
+                        {short && <span className="text-red-600 font-medium">stok {whCode(it.warehouse_id)} kurang {fq(need - avail)}</span>}
                         {it.factor !== 1 && (
                           <span>
-                            = {fq(need)} {p?.base_unit}
+                            = {fq(it.qty * it.factor)} {p?.base_unit}
                           </span>
                         )}
                         {hint?.(it)}
                       </div>
+                    </td>
+                    <td>
+                      <Select value={it.warehouse_id} onChange={(e) => update(it.key, { warehouse_id: e.target.value })} className={cx("py-1.5", short && "border-red-400")}>
+                        {warehouses.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </Select>
                     </td>
                     <td>
                       <NumInput value={it.qty} onChange={(n) => update(it.key, { qty: n })} className="py-1.5" />
@@ -197,11 +233,26 @@ export function ItemsEditor({
         </div>
       )}
       {items.length === 0 && <div className="text-sm text-muted text-center py-6 border border-dashed border-line rounded-lg">Belum ada barang. Cari barang di atas untuk menambahkan.</div>}
+      {items.length > 0 && warehouses.length > 1 && (
+        <p className="text-xs text-muted">Gudang default {warehouses[0]?.name}. Untuk mengambil satu barang dari dua gudang, tambahkan barang yang sama sekali lagi dan pilih gudang lainnya.</p>
+      )}
     </div>
   );
 }
 
+/** Stok + barang dari dokumen yang sedang diubah (supaya saat koreksi, jumlah lama dianggap tersedia) */
+export function addBack(stockAll: StockAll, items: { product_id: string; warehouse_id: string; qty: number; factor: number }[], sign: 1 | -1 = 1): StockAll {
+  const out: StockAll = Object.fromEntries(Object.entries(stockAll).map(([k, v]) => [k, { ...v }]));
+  for (const it of items) {
+    out[it.product_id] ??= {};
+    out[it.product_id][it.warehouse_id] = (out[it.product_id][it.warehouse_id] ?? 0) + sign * it.qty * it.factor;
+  }
+  return out;
+}
+
 export const itemsSubtotal = (items: LineItem[]) => items.reduce((s, it) => s + Math.round(it.qty * it.price * 100) / 100, 0);
 export const itemsPayload = (items: LineItem[]) =>
-  items.filter((it) => it.qty > 0).map(({ product_id, name, qty, unit, factor, price }) => ({ product_id, name, qty, unit, factor, price }));
+  items
+    .filter((it) => it.qty > 0)
+    .map(({ product_id, name, qty, unit, factor, price, warehouse_id }) => ({ product_id, name, qty, unit, factor, price, warehouse_id }));
 export { rp };

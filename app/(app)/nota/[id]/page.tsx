@@ -16,7 +16,7 @@ import { Button, Card, ErrorBox, Loading } from "@/components/ui";
 export default function NotaDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { settings } = useApp();
+  const { settings, warehouses } = useApp();
   const [payOpen, setPayOpen] = useState(false);
 
   const { data, error, loading, reload } = useAsync(async () => {
@@ -102,7 +102,7 @@ export default function NotaDetail() {
 
       <div className="grid xl:grid-cols-[1fr_320px] gap-4 items-start">
         <div className="print-area bg-white border border-line rounded-xl p-6 md:p-10 max-w-[210mm] shadow-sm overflow-x-auto">
-          <Invoice sale={sale} items={items} settings={settings} />
+          <Invoice sale={sale} items={items} settings={settings} warehouses={warehouses} />
         </div>
 
         <div className="no-print space-y-4">

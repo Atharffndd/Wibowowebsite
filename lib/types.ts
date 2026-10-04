@@ -71,6 +71,7 @@ export type LineItem = {
   factor: number;
   qty: number;
   price: number;
+  warehouse_id: string;
 };
 
 export type Sale = {
@@ -103,6 +104,7 @@ export type SaleItem = {
   factor: number;
   price: number;
   subtotal: number;
+  warehouse_id?: string | null;
 };
 
 export type Purchase = {

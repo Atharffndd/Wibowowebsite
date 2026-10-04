@@ -3,11 +3,11 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sb, errMsg } from "@/lib/supabase";
-import { loadCustomers, loadProducts, loadStockMap } from "@/lib/hooks";
+import { loadCustomers, loadProducts, loadStockAll, type StockAll } from "@/lib/hooks";
 import { addDays, num, rp, tglPendek, today } from "@/lib/format";
 import type { Customer, LineItem, Product, Sale, SaleItem } from "@/lib/types";
 import { useApp } from "@/components/AppContext";
-import { ItemsEditor, itemsPayload, itemsSubtotal, newKey } from "@/components/ItemsEditor";
+import { ItemsEditor, addBack, itemsPayload, itemsSubtotal, newKey } from "@/components/ItemsEditor";
 import { Button, Card, ErrorBox, Field, Input, Loading, NumInput, PageHeader, Select, Textarea } from "@/components/ui";
 
 export default function Page() {
@@ -29,14 +29,13 @@ function NotaForm() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [specialPrices, setSpecialPrices] = useState<Record<string, number>>({});
   const [lastPrices, setLastPrices] = useState<Record<string, LastPrice>>({});
-  const [stock, setStock] = useState<Record<string, number>>({});
+  const [stockAll, setStockAll] = useState<StockAll>({});
   const [ready, setReady] = useState(false);
 
   const [number, setNumber] = useState<string | null>(null);
   const [date, setDate] = useState(today());
   const [customerId, setCustomerId] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? "");
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<LineItem[]>([]);
@@ -54,9 +53,10 @@ function NotaForm() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, c] = await Promise.all([loadProducts(), loadCustomers()]);
+        const [p, c, st] = await Promise.all([loadProducts(), loadCustomers(), loadStockAll()]);
         setProducts(p);
         setCustomers(c);
+        setStockAll(st);
         if (editId) {
           const [{ data: s, error: e1 }, { data: its, error: e2 }] = await Promise.all([
             sb().from("sales").select("*").eq("id", editId).single(),
@@ -68,24 +68,25 @@ function NotaForm() {
           setDate(sale.date);
           setCustomerId(sale.customer_id ?? "");
           setCustomerName(sale.customer_name);
-          setWarehouseId(sale.warehouse_id);
           setDueDate(sale.due_date ?? "");
           setNotes(sale.notes ?? "");
           setDiscount(Number(sale.discount));
           setShipping(Number(sale.shipping));
           setTaxOn(Number(sale.tax_percent) > 0);
           if (Number(sale.tax_percent) > 0) setTaxPercent(Number(sale.tax_percent));
-          setItems(
-            (its as SaleItem[]).map((it) => ({
-              key: newKey(),
-              product_id: it.product_id,
-              name: it.name,
-              unit: it.unit,
-              factor: Number(it.factor),
-              qty: Number(it.qty),
-              price: Number(it.price),
-            })),
-          );
+          const rows = (its as SaleItem[]).map((it) => ({
+            key: newKey(),
+            product_id: it.product_id,
+            name: it.name,
+            unit: it.unit,
+            factor: Number(it.factor),
+            qty: Number(it.qty),
+            price: Number(it.price),
+            warehouse_id: it.warehouse_id ?? sale.warehouse_id,
+          }));
+          setItems(rows);
+          // barang di nota ini sudah mengurangi stok; saat diubah, jumlah lamanya dianggap tersedia lagi
+          setStockAll(addBack(st, rows));
         }
         setReady(true);
       } catch (e) {
@@ -94,9 +95,6 @@ function NotaForm() {
     })();
   }, [editId]);
 
-  useEffect(() => {
-    if (warehouseId) loadStockMap(warehouseId).then(setStock);
-  }, [warehouseId]);
 
   // Harga khusus & harga terakhir untuk pelanggan terpilih
   useEffect(() => {
@@ -173,7 +171,6 @@ function NotaForm() {
   async function save() {
     setError(null);
     if (!customerName.trim()) return setError("Isi nama pelanggan.");
-    if (!warehouseId) return setError("Pilih gudang.");
     if (itemsPayload(items).length === 0) return setError("Tambahkan minimal 1 barang.");
     setBusy(true);
     const { data, error } = await sb().rpc("save_sale", {
@@ -182,7 +179,6 @@ function NotaForm() {
         date,
         customer_id: customerId || null,
         customer_name: customerName.trim(),
-        warehouse_id: warehouseId,
         due_date: dueDate || null,
         notes: notes || null,
         discount,
@@ -226,19 +222,10 @@ function NotaForm() {
               <Field label="Tanggal">
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </Field>
-              <Field label="Gudang (stok keluar dari)">
-                <Select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
             </div>
           </Card>
           <Card title="Barang">
-            <ItemsEditor items={items} setItems={setItems} products={products} priceFor={priceFor} stock={stock} priceLabel="Harga jual" hint={hint} />
+            <ItemsEditor items={items} setItems={setItems} products={products} priceFor={priceFor} warehouses={warehouses} stockAll={stockAll} checkStock priceLabel="Harga jual" hint={hint} />
             {customer && (
               <p className="text-xs text-muted mt-3">
                 Harga otomatis: harga khusus pelanggan → harga {customer.price_type}. Harga tetap bisa diubah manual per nota.
