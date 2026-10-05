@@ -191,7 +191,7 @@ function NotaForm() {
     });
     setBusy(false);
     if (error) return setError(error.message);
-    router.push(`/nota/${data}`);
+    router.push(`/nota/${data}?saved=1`);
   }
 
   if (!ready) return error ? <ErrorBox error={error} /> : <Loading />;

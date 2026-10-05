@@ -12,6 +12,7 @@ const NAV: { group: string; items: { href: string; label: string; icon: string }
     group: "Transaksi",
     items: [
       { href: "/nota", label: "Nota Penjualan", icon: "🧾" },
+      { href: "/surat-jalan", label: "Surat Jalan", icon: "🚛" },
       { href: "/barang-masuk", label: "Barang Masuk", icon: "📥" },
       { href: "/retur", label: "Retur", icon: "↩" },
       { href: "/biaya", label: "Biaya Operasional", icon: "💸" },

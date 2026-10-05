@@ -6,8 +6,9 @@ import { num, qty, tanggal } from "@/lib/format";
 /** Tampilan nota — mengikuti format nota contoh (cetak A4/A5). TTD + paraf selalu tampil. */
 type Row = { key: string; name: string; unit: string; price: number; qty: number; subtotal: number; sources: { wh: string; qty: number }[] };
 
-/** Gabungkan baris barang yang sama (nama, satuan, harga sama) — mis. diambil dari dua gudang */
-function mergeRows(items: SaleItem[], sale: Sale): Row[] {
+/** Gabungkan baris barang yang sama (nama, satuan, harga sama) — mis. diambil dari dua gudang.
+ *  Dipakai juga oleh Surat Jalan agar daftar barangnya sama persis dengan nota. */
+export function mergeRows(items: SaleItem[], sale: Sale): Row[] {
   const out: Row[] = [];
   const byKey = new Map<string, Row>();
   for (const it of items) {
