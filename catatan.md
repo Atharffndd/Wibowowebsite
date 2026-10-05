@@ -51,7 +51,7 @@
 - Default: nomor = nomor nota (bisa diubah), tanggal = tanggal nota, penerima = nama di nota, alamat = alamat pelanggan.
 - Kendaraan: jenis `Mobil` / `Pick-up`; nomor `B 2914 WFK`, `R 8287 AM`, `Z 9016 HB` (konstanta di `lib/types.ts`).
 - Dokumen: kop sama dengan nota, judul **SURAT JALAN** + NOMOR, "Kepada" + alamat, tanggal, kalimat kendaraan, tabel `NO. | BANYAK BARANG | NAMA BARANG` (tanpa harga/total), tanda tangan kiri **Tanda Terima** (kosong) & kanan **Hormat kami** + aset TTD yang sama dengan nota.
-- Cetak/PDF lewat dialog cetak (judul file otomatis "Surat Jalan <nomor>"); header tabel berulang tiap halaman, area tanda tangan tidak terpotong (`.sj-table`, `.sj-sign` di globals.css). WhatsApp kirim ringkasan teks.
+- Cetak lewat dialog cetak; **Unduh PDF** & **WhatsApp** membuat PDF A4 langsung di browser (`lib/pdf.ts`, html-to-image + jspdf) dengan judul tabel berulang & tanda tangan tidak terpotong. WhatsApp = menu Bagikan (Web Share API, harus dari ketukan tombol → dialog 2 langkah di `components/ShareDoc.tsx`) sehingga PDF terlampir; cadangan: Unduh PDF + buka wa.me.
 - Batal = `status = 'batal'` (tidak dihapus). Kode: `components/SuratJalan.tsx`, `lib/suratJalan.ts`, `app/(app)/surat-jalan/*`.
 
 ### Format nota (mengikuti contoh pemilik)
@@ -223,6 +223,8 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 - Pemilik bisa sedang memakai website saat Claude bekerja → **cek ulang data terbaru sebelum memperbaiki data**.
 - Perbaikan data dilakukan lewat fungsi resmi (`save_purchase`, `save_sale`, `save_adjustment`) agar HPP & stok konsisten — bukan UPDATE langsung ke mutasi.
 
+- Cetak: `@page { margin: 0 }` + padding 12mm di `.print-area` agar browser tidak mencetak header/footer (URL, tanggal, nomor halaman). Jangan kembalikan margin @page. PDF memotong halaman di `tbody tr`, `.pdf-keep`, `.sj-sign`; tabel barang wajib class `items-table`.
+
 ---
 
 ## 8. Riwayat perubahan (PR)
@@ -238,6 +240,7 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 | (PR berikutnya) | Fitur Surat Jalan |
 
 - (PR berikutnya) Tampilan ramah iPad: menu ☰ di bawah 1024px, isian barang berbentuk kartu, bar Simpan bawah, kolom isian 16px/44px untuk layar sentuh.
+- (PR #9) WhatsApp Nota & Surat Jalan kirim file PDF (menu Bagikan), Unduh PDF langsung, hapus header/footer cetak & baris "Nota: …" di Surat Jalan.
 
 Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan).
 
