@@ -11,6 +11,7 @@
 **Nota Tiga Putra** adalah website internal untuk **Tiga Putra Supplier** (pemasok bahan makanan; pelanggan utama dapur **SPPG**). Fungsinya:
 
 - Nota penjualan (cetak/PDF/WhatsApp) dengan TTD + paraf
+- Surat Jalan dari nota (cetak/PDF/WhatsApp), barang otomatis sama dengan nota, tanpa harga
 - Barang & harga (multi satuan, eceran/grosir, harga khusus pelanggan)
 - Stok 2 gudang (Gudang 1-P, Gudang 2-R), barang masuk/keluar, opname, transfer
 - Pelanggan, supplier, piutang, hutang, retur, biaya operasional
@@ -43,6 +44,15 @@
 - **Satuan ganda:** dus, pcs, kg, dll. dengan konversi ke satuan dasar (`factor`).
 - **Pelanggan awal:** 10 dapur SPPG (dari Excel pemilik; kolom di Excel berjudul "Supplier" tetapi isinya pelanggan).
 - **TTD + paraf:** `public/ttd.webp` (logo TP + tanda tangan), bisa diganti di menu Pengaturan (disimpan ke Storage bucket `branding`). **Wajib tampil di setiap nota.**
+
+### Surat Jalan
+- Dibuat dari nota: detail nota → **🚛 Buat Surat Jalan** (juga muncul setelah nota disimpan, `?saved=1`). Menu sendiri: **Surat Jalan**.
+- Tabel `delivery_notes` (sale_id, number, date, recipient_name, recipient_address, vehicle_type, vehicle_number, notes, status). Barang **tidak disalin**: selalu dibaca dari item aktif nota sumber lewat `mergeRows` (urutan/jumlah/satuan/nama sama persis dengan nota cetak).
+- Default: nomor = nomor nota (bisa diubah), tanggal = tanggal nota, penerima = nama di nota, alamat = alamat pelanggan.
+- Kendaraan: jenis `Mobil` / `Pick-up`; nomor `B 2914 WFK`, `R 8287 AM`, `Z 9016 HB` (konstanta di `lib/types.ts`).
+- Dokumen: kop sama dengan nota, judul **SURAT JALAN** + NOMOR, "Kepada" + alamat, tanggal, kalimat kendaraan, tabel `NO. | BANYAK BARANG | NAMA BARANG` (tanpa harga/total), tanda tangan kiri **Tanda Terima** (kosong) & kanan **Hormat kami** + aset TTD yang sama dengan nota.
+- Cetak/PDF lewat dialog cetak (judul file otomatis "Surat Jalan <nomor>"); header tabel berulang tiap halaman, area tanda tangan tidak terpotong (`.sj-table`, `.sj-sign` di globals.css). WhatsApp kirim ringkasan teks.
+- Batal = `status = 'batal'` (tidak dihapus). Kode: `components/SuratJalan.tsx`, `lib/suratJalan.ts`, `app/(app)/surat-jalan/*`.
 
 ### Format nota (mengikuti contoh pemilik)
 Kop "… Supplier" + alamat + HP · `NOMOR` di kanan atas · garis tebal · "Kepada: …" + tanggal (format "2 Oktober 2026") · tabel `# | NAMA BARANG | JML | SAT | HARGA | JUMLAH` · `TOTAL Rp …` · "Info Pembayaran A.N. …" + grid rekening · "Hormat kami," + gambar TTD.
@@ -224,8 +234,10 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 | [#3](https://github.com/Atharffndd/Wibowowebsite/pull/3) | `CLAUDE.md` konteks proyek |
 | [#4](https://github.com/Atharffndd/Wibowowebsite/pull/4) | Stok gudang tidak boleh minus; "Koreksi data" vs "+ Barang masuk baru"; perbaikan data Susu Ultra |
 | [#5](https://github.com/Atharffndd/Wibowowebsite/pull/5) | Gudang per barang di nota, barang masuk, retur; nota cetak menggabungkan baris |
+| [#6](https://github.com/Atharffndd/Wibowowebsite/pull/6) | catatan.md |
+| (PR berikutnya) | Fitur Surat Jalan |
 
-Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item).
+Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan).
 
 ---
 
@@ -260,4 +272,3 @@ Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa l
 
 - PIN sederhana untuk membuka website (pengganti login), jika suatu saat diperlukan.
 - Nomor nota bersambung tanpa reset bulanan (saat ini reset tiap bulan).
-- Surat jalan terpisah yang menampilkan gudang asal.

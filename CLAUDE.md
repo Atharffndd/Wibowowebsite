@@ -19,6 +19,7 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 - PPN belum dipakai (tersedia, default mati). HPP: **rata-rata tertimbang**.
 - Harga bisa beda per pelanggan, per hari, grosir/eceran. Satuan ganda (dus, pcs, kg, …) dengan konversi.
 - TTD + paraf (gambar `public/ttd.webp`, bisa diganti di Pengaturan) **wajib tampil di setiap nota**.
+- **Surat Jalan** dibuat dari nota (tabel `delivery_notes`, barang selalu dibaca dari nota sumber, tanpa harga; kendaraan Mobil/Pick-up, nomor B 2914 WFK / R 8287 AM / Z 9016 HB; kanan pakai aset TTD yang sama dengan nota). Detail di catatan.md.
 - Format nota mengikuti contoh pemilik: kop nama "… Supplier", NOMOR kanan atas, Kepada + tanggal, tabel # / NAMA BARANG / JML / SAT / HARGA / JUMLAH, TOTAL, Info Pembayaran A.N., grid rekening, "Hormat kami," + TTD.
 
 ## Keputusan pemilik (jangan diubah tanpa diminta)
@@ -40,3 +41,13 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 2. Isi `settings` (nama, alamat, HP, rekening, A.N.), `warehouses`, pelanggan & barang awal.
 3. Repo/branch baru dari kode ini, ganti default URL/key di `lib/supabase.ts` dan `.env.example`, ganti `public/ttd.webp`, judul di `app/layout.tsx` & teks "TIGA PUTRA" di `components/Shell.tsx`.
 4. Vercel project baru + env `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, domain `nota<nama>.vercel.app`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

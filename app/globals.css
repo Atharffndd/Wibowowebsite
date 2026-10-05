@@ -58,6 +58,7 @@ body {
     size: A4;
     margin: 12mm;
   }
+  html,
   body {
     background: #fff !important;
   }
@@ -70,8 +71,19 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     max-width: none !important;
+    overflow: visible !important;
   }
   main {
     padding: 0 !important;
   }
+}
+
+/* ===== Surat Jalan: header tabel berulang & tanda tangan tidak terpotong ===== */
+.sj-table thead {
+  display: table-header-group;
+}
+.sj-table tr,
+.sj-sign {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }

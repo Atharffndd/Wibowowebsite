@@ -128,3 +128,21 @@ export type Purchase = {
 
 export const balance = (d: { total: number; paid_amount: number; return_amount: number }) =>
   Number(d.total) - Number(d.paid_amount) - Number(d.return_amount);
+
+export type DeliveryNote = {
+  id: string;
+  sale_id: string;
+  number: string;
+  date: string;
+  recipient_name: string;
+  recipient_address: string | null;
+  vehicle_type: string | null;
+  vehicle_number: string | null;
+  notes: string | null;
+  status: "aktif" | "batal";
+  created_at: string;
+};
+
+/** Pilihan kendaraan untuk Surat Jalan */
+export const VEHICLE_TYPES = ["Mobil", "Pick-up"];
+export const VEHICLE_NUMBERS = ["B 2914 WFK", "R 8287 AM", "Z 9016 HB"];
