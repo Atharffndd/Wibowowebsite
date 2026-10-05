@@ -3,6 +3,8 @@
 Nama proyek: **Nota Tiga Putra**. Website internal nota, stok & penjualan untuk **Tiga Putra Supplier** (pemasok bahan makanan, pelanggan utama dapur SPPG).
 Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rupiah.
 
+**Baca juga `catatan.md`** — catatan lengkap proyek (persiapan sesi, arsitektur, database, alur kerja, riwayat, masalah terbuka). Perbarui catatan.md setiap ada keputusan/perubahan baru.
+
 ## Lokasi & akun
 - Live: https://notatigaputra.vercel.app (Vercel project `tiga-putra-website`, deploy otomatis dari branch `main`)
 - Repo: github.com/Atharffndd/Wibowowebsite
