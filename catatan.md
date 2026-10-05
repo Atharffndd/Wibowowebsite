@@ -237,6 +237,8 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 | [#6](https://github.com/Atharffndd/Wibowowebsite/pull/6) | catatan.md |
 | (PR berikutnya) | Fitur Surat Jalan |
 
+- (PR berikutnya) Tampilan ramah iPad: menu ☰ di bawah 1024px, isian barang berbentuk kartu, bar Simpan bawah, kolom isian 16px/44px untuk layar sentuh.
+
 Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan).
 
 ---
