@@ -30,9 +30,9 @@ export function mergeRows(items: SaleItem[], sale: Pick<Sale, "warehouse_id"> | 
 }
 
 /**
- * Layout nota khas Tiga Putra (sengaja beda dari Wibowo Supplier):
- * garis aksen biru di atas, kop kiri + kotak NOTA (nomor & tanggal) kanan, kotak "Kepada",
- * tabel berjudul biru dengan baris belang, bilah TOTAL biru, lalu pembayaran (kiri) & TTD (kanan).
+ * Layout nota khas Tiga Putra — "Opsi B" pilihan pemilik (sederhana, beda dari Wibowo Supplier):
+ * kop kiri ("Tiga Putra" biru) + kata NOTA biru & nomor kanan, garis tipis, Kepada / Tanggal,
+ * judul tabel berlatar biru sangat muda, TOTAL berlatar biru muda, pembayaran (kiri) & TTD (kanan).
  */
 export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale; items: SaleItem[]; settings: Settings; warehouses?: Warehouse[] }) {
   const rows = mergeRows(items, sale);
@@ -43,26 +43,27 @@ export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale
 
   return (
     <div className="invoice tp-doc text-[13px] leading-snug">
-      <div className="tp-accent" />
-
-      {/* Kop + kotak nota */}
-      <div className="flex justify-between items-stretch gap-6 mt-4">
+      {/* Kop */}
+      <div className="flex justify-between items-start gap-6">
         <div className="min-w-0">
-          <div className="tp-brand text-[26px] font-extrabold leading-none mb-1.5">{settings.company_name} Supplier</div>
-          {settings.address && <div className="text-neutral-700">{settings.address}</div>}
-          {settings.phone && <div className="text-neutral-700">Telp. {settings.phone}</div>}
+          <TpName name={settings.company_name} />
+          {settings.address && <div className="text-neutral-600 mt-1">{settings.address}</div>}
+          {settings.phone && <div className="text-neutral-600">{settings.phone}</div>}
         </div>
-        <div className="tp-box shrink-0 min-w-52 text-right">
-          <div className="tp-label">NOTA</div>
-          <div className="num font-bold text-[15px]">{sale.number}</div>
-          <div className="text-neutral-700 mt-1">{tanggal(sale.date)}</div>
+        <div className="text-right shrink-0">
+          <div className="tp-doctitle">NOTA</div>
+          <div className="num font-semibold">{sale.number}</div>
           {sale.status === "batal" && <div className="mt-1 inline-block border-2 border-red-600 text-red-600 font-bold px-2 rotate-[-4deg]">BATAL</div>}
         </div>
       </div>
 
-      <div className="tp-to mt-4 mb-4">
-        <span className="tp-label mr-2">KEPADA</span>
-        <span className="font-semibold text-[14px]">{sale.customer_name}</span>
+      <div className="tp-meta">
+        <div>
+          Kepada: <b>{sale.customer_name}</b>
+        </div>
+        <div className="text-right">
+          Tanggal: <b>{tanggal(sale.date)}</b>
+        </div>
       </div>
 
       {/* Tabel barang */}
@@ -79,8 +80,8 @@ export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale
         </thead>
         <tbody>
           {rows.map((it, i) => (
-            <tr key={it.key} className="align-top">
-              <td className="text-center num text-neutral-600">{i + 1}</td>
+            <tr key={it.key}>
+              <td className="text-center num text-neutral-500">{i + 1}</td>
               <td>
                 {it.name}
                 {/* info gudang hanya untuk internal — tidak ikut dicetak */}
@@ -93,43 +94,43 @@ export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale
               <td className="text-right num">{qty(it.qty)}</td>
               <td>{it.unit}</td>
               <td className="text-right num">{num(it.price)}</td>
-              <td className="text-right num font-medium">{num(it.subtotal)}</td>
+              <td className="text-right num">{num(it.subtotal)}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {/* Total */}
-      <div className="pdf-keep flex justify-end mt-3">
-        <div className="w-72">
-          {hasExtras && (
-            <div className="flex justify-between px-3 py-0.5">
+      <div className="pdf-keep flex flex-col items-end mt-2.5">
+        {hasExtras && (
+          <div className="w-72 px-3.5 space-y-0.5 mb-1">
+            <div className="flex justify-between">
               <span>Subtotal</span>
               <span className="num">{num(sale.subtotal)}</span>
             </div>
-          )}
-          {Number(sale.discount) > 0 && (
-            <div className="flex justify-between px-3 py-0.5">
-              <span>Diskon</span>
-              <span className="num">-{num(sale.discount)}</span>
-            </div>
-          )}
-          {showTax && (
-            <div className="flex justify-between px-3 py-0.5">
-              <span>PPN {Number(sale.tax_percent)}%</span>
-              <span className="num">{num(sale.tax_amount)}</span>
-            </div>
-          )}
-          {Number(sale.shipping) > 0 && (
-            <div className="flex justify-between px-3 py-0.5">
-              <span>Ongkir</span>
-              <span className="num">{num(sale.shipping)}</span>
-            </div>
-          )}
-          <div className="tp-total flex justify-between items-baseline mt-1">
-            <span className="font-bold tracking-wide">TOTAL</span>
-            <span className="num font-extrabold text-[17px]">Rp {num(sale.total)}</span>
+            {Number(sale.discount) > 0 && (
+              <div className="flex justify-between">
+                <span>Diskon</span>
+                <span className="num">-{num(sale.discount)}</span>
+              </div>
+            )}
+            {showTax && (
+              <div className="flex justify-between">
+                <span>PPN {Number(sale.tax_percent)}%</span>
+                <span className="num">{num(sale.tax_amount)}</span>
+              </div>
+            )}
+            {Number(sale.shipping) > 0 && (
+              <div className="flex justify-between">
+                <span>Ongkir</span>
+                <span className="num">{num(sale.shipping)}</span>
+              </div>
+            )}
           </div>
+        )}
+        <div className="tp-total">
+          <span>TOTAL</span>
+          <span className="num">Rp {num(sale.total)}</span>
         </div>
       </div>
 
@@ -140,27 +141,27 @@ export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale
       )}
 
       {/* Pembayaran (kiri) + TTD (kanan) */}
-      <div className="pdf-keep grid grid-cols-[minmax(0,1fr)_auto] gap-6 mt-5 items-start">
-        <div className="tp-box">
-          <div className="tp-label mb-1">INFO PEMBAYARAN</div>
+      <div className="pdf-keep grid grid-cols-[minmax(0,1fr)_auto] gap-6 mt-6 items-start">
+        <div>
+          <div className="font-bold">Info Pembayaran</div>
           {settings.account_name && (
-            <div className="mb-1.5">
+            <div className="mt-0.5 mb-1">
               A.N. <b>{settings.account_name}</b>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-0.5">
+          <div className="grid grid-cols-[repeat(2,auto)] justify-start gap-x-7 gap-y-0.5">
             {settings.banks.map((b, i) => (
               <div key={i}>
-                <span className="font-semibold">{b.bank}</span> <span className="num">{b.number}</span>
+                <b>{b.bank}</b> <span className="num">{b.number}</span>
               </div>
             ))}
           </div>
           {sale.due_date && (
-            <div className="mt-2 text-[12px]">
+            <div className="mt-1.5 text-[12px]">
               Jatuh tempo: <b>{tanggal(sale.due_date)}</b>
             </div>
           )}
-          {settings.footer_note && <div className="mt-2 text-[12px]">{settings.footer_note}</div>}
+          {settings.footer_note && <div className="mt-1.5 text-[12px]">{settings.footer_note}</div>}
         </div>
         {/* TTD + paraf (wajib di setiap nota) */}
         <div className="text-center w-60">
@@ -169,6 +170,15 @@ export function Invoice({ sale, items, settings, warehouses = [] }: { sale: Sale
           <img src={sig} alt="Tanda tangan & paraf" className="w-full h-auto max-h-36 object-contain mx-auto" />
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Nama perusahaan di kop: kata pertama-kedua (mis. "Tiga Putra") biru, diikuti "Supplier" */
+export function TpName({ name }: { name: string }) {
+  return (
+    <div className="text-[24px] font-extrabold leading-none tracking-tight">
+      <span className="text-[#0a5fe8]">{name}</span> Supplier
     </div>
   );
 }
