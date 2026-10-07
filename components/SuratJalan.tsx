@@ -2,7 +2,7 @@
 
 import type { Sale, SaleItem, Settings } from "@/lib/types";
 import { qty, tanggal } from "@/lib/format";
-import { mergeRows } from "./Invoice";
+import { TpName, mergeRows } from "./Invoice";
 
 export type SuratJalanData = {
   number: string;
@@ -28,27 +28,28 @@ export function SuratJalan({ sj, sale, items, settings }: { sj: SuratJalanData; 
 
   return (
     <div className="invoice tp-doc surat-jalan text-[13px] leading-snug">
-      <div className="tp-accent" />
-
-      {/* Kop + kotak Surat Jalan — gaya sama dengan nota Tiga Putra */}
-      <div className="flex justify-between items-stretch gap-6 mt-4">
+      {/* Kop — gaya sama dengan nota Tiga Putra (Opsi B) */}
+      <div className="flex justify-between items-start gap-6">
         <div className="min-w-0">
-          <div className="tp-brand text-[26px] font-extrabold leading-none mb-1.5">{settings.company_name} Supplier</div>
-          {settings.address && <div className="text-neutral-700">{settings.address}</div>}
-          {settings.phone && <div className="text-neutral-700">Telp. {settings.phone}</div>}
+          <TpName name={settings.company_name} />
+          {settings.address && <div className="text-neutral-600 mt-1">{settings.address}</div>}
+          {settings.phone && <div className="text-neutral-600">{settings.phone}</div>}
         </div>
-        <div className="tp-box shrink-0 min-w-52 text-right">
-          <div className="tp-label">SURAT JALAN</div>
-          <div className="num font-bold text-[15px]">{sj.number || "-"}</div>
-          <div className="text-neutral-700 mt-1">{tanggal(sj.date)}</div>
+        <div className="text-right shrink-0">
+          <div className="tp-doctitle">SURAT JALAN</div>
+          <div className="num font-semibold">{sj.number || "-"}</div>
           {sj.status === "batal" && <div className="mt-1 inline-block border-2 border-red-600 text-red-600 font-bold px-2 rotate-[-4deg]">BATAL</div>}
         </div>
       </div>
 
-      <div className="tp-to mt-4 mb-3">
-        <span className="tp-label mr-2">KEPADA</span>
-        <span className="font-semibold text-[14px]">{sj.recipient_name || "-"}</span>
-        {sj.recipient_address && <div className="whitespace-pre-line mt-0.5 text-neutral-700">{sj.recipient_address}</div>}
+      <div className="tp-meta">
+        <div className="min-w-0">
+          Kepada: <b>{sj.recipient_name || "-"}</b>
+          {sj.recipient_address && <div className="whitespace-pre-line text-neutral-600">{sj.recipient_address}</div>}
+        </div>
+        <div className="text-right shrink-0">
+          Tanggal: <b>{tanggal(sj.date)}</b>
+        </div>
       </div>
 
       <div className="mb-3">
@@ -74,10 +75,10 @@ export function SuratJalan({ sj, sale, items, settings }: { sj: SuratJalanData; 
         </thead>
         <tbody>
           {rows.map((it, i) => (
-            <tr key={it.key} className="align-top">
-              <td className="text-center num text-neutral-600">{i + 1}</td>
+            <tr key={it.key}>
+              <td className="text-center num text-neutral-500">{i + 1}</td>
               <td className="pr-6 text-right">
-                <span className="num font-medium">{qty(it.qty)}</span> {it.unit}
+                <span className="num">{qty(it.qty)}</span> {it.unit}
               </td>
               <td>{it.name}</td>
             </tr>
@@ -92,13 +93,13 @@ export function SuratJalan({ sj, sale, items, settings }: { sj: SuratJalanData; 
       )}
 
       {/* Tanda tangan — tidak terpotong antar halaman */}
-      <div className="sj-sign grid grid-cols-2 gap-10 mt-6">
-        <div className="tp-box text-center">
+      <div className="sj-sign grid grid-cols-2 gap-10 mt-7">
+        <div className="text-center">
           <div className="mb-1">Tanda Terima,</div>
           <div className="h-28" />
-          <div className="mx-auto w-52 border-t border-neutral-600 pt-1 text-[11px] text-neutral-600">nama &amp; tanda tangan penerima</div>
+          <div className="mx-auto w-52 border-t border-neutral-500 pt-1 text-[11px] text-neutral-500">nama &amp; tanda tangan penerima</div>
         </div>
-        <div className="tp-box text-center">
+        <div className="text-center">
           <div className="mb-1">Hormat kami,</div>
           {/* aset TTD + paraf yang sama persis dengan nota */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
