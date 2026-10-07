@@ -21,7 +21,8 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 - TTD + paraf (gambar `public/ttd.webp`, bisa diganti di Pengaturan) **wajib tampil di setiap nota**.
 - **Surat Jalan** dibuat dari nota (tabel `delivery_notes`, barang selalu dibaca dari nota sumber, tanpa harga; kendaraan Mobil/Pick-up, nomor B 2914 WFK / R 8287 AM / Z 9016 HB; kanan pakai aset TTD yang sama dengan nota). Bisa juga **tanpa nota** (`sale_id` null, barang di `delivery_note_items`, nomor `SJ/YYYY/MM/NNNN`, tidak mengurangi stok). Detail di catatan.md.
 - **Ketik baru:** pelanggan/supplier/barang yang belum terdaftar boleh diketik langsung di Nota, Barang Masuk, Retur & Surat Jalan tanpa nota; tersimpan otomatis saat dokumen disimpan (`resolve_new`). Barang baru di nota Tiga Putra otomatis diberi stok awal sejumlah yang dijual (stok tidak boleh minus).
-- Format nota mengikuti contoh pemilik: kop nama "… Supplier", NOMOR kanan atas, Kepada + tanggal, tabel # / NAMA BARANG / JML / SAT / HARGA / JUMLAH, TOTAL, Info Pembayaran A.N., grid rekening, "Hormat kami," + TTD.
+- Format nota (isi mengikuti contoh pemilik): kop "… Supplier", nomor, Kepada, tanggal, tabel No / Nama Barang / Jml / Sat / Harga / Jumlah, TOTAL, Info Pembayaran A.N. + rekening, "Hormat kami," + TTD.
+- **Layout khas Tiga Putra** (Okt 2026, sengaja beda dari Wibowo Supplier — jangan disamakan): font Plus Jakarta Sans, garis aksen biru, kotak NOTA/SURAT JALAN (nomor + tanggal) kanan atas, kotak "KEPADA" biru muda, tabel berjudul biru + baris belang, bilah TOTAL biru, Info Pembayaran (kiri) & TTD (kanan) sejajar. CSS kelas `tp-*` di `app/globals.css`.
 
 ## Keputusan pemilik (jangan diubah tanpa diminta)
 - **Tanpa login sama sekali.** Semua tabel bisa diakses role `anon` (policy `open_all`), `is_staff()` selalu `true`, Vercel SSO protection dimatikan. Pemilik sudah diberi tahu risikonya.
