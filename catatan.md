@@ -245,6 +245,7 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 - (PR berikutnya) Tampilan ramah iPad: menu ☰ di bawah 1024px, isian barang berbentuk kartu, bar Simpan bawah, kolom isian 16px/44px untuk layar sentuh.
 - (PR #9) WhatsApp Nota & Surat Jalan kirim file PDF (menu Bagikan), Unduh PDF langsung, hapus header/footer cetak & baris "Nota: …" di Surat Jalan.
 - (PR #11) Cap & paraf digambar langsung ke kanvas PDF (hilang di Safari iPad).
+- (Okt 2026) Layout Nota & Surat Jalan khas Tiga Putra (beda dari Wibowo): Plus Jakarta Sans, aksen biru, kotak nomor/tanggal, tabel berjudul biru, bilah TOTAL, pembayaran & TTD sejajar. Kelas CSS `tp-*`.
 - (Okt 2026) Opsi grosir/eceran dihapus (1 harga jual); pelanggan/supplier/barang baru bisa diketik langsung (`NameCombo`, `ItemsEditor allowNew`); setelah pilih barang kursor ke Jumlah → Enter Harga → Enter kembali ke cari barang; Surat Jalan tanpa nota (menu Surat Jalan → "+ Surat Jalan tanpa nota").
 
 Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan) · `0006_ketik_baru_sj_mandiri` (harga jual tunggal, ketik baru, Surat Jalan tanpa nota).
