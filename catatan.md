@@ -12,7 +12,7 @@
 
 - Nota penjualan (cetak/PDF/WhatsApp) dengan TTD + paraf
 - Surat Jalan dari nota (cetak/PDF/WhatsApp), barang otomatis sama dengan nota, tanpa harga
-- Barang & harga (multi satuan, eceran/grosir, harga khusus pelanggan)
+- Barang & harga (multi satuan, satu harga jual per satuan, harga khusus pelanggan)
 - Stok 2 gudang (Gudang 1-P, Gudang 2-R), barang masuk/keluar, opname, transfer
 - Pelanggan, supplier, piutang, hutang, retur, biaya operasional
 - Laporan penjualan, HPP, laba (per hari/bulan/barang/kategori/pelanggan/gudang) + export Excel
@@ -40,7 +40,7 @@
 - **Penomoran:** nota `INV/YYYY/MM/NNNN`, barang masuk `BM/…`, retur penjualan `RJ/…`, retur pembelian `RB/…`. Nomor urut **reset tiap bulan** (tabel `doc_counters`).
 - **PPN:** belum dipakai (fitur tersedia, default mati).
 - **HPP:** rata-rata tertimbang (moving average), dihitung ulang dari seluruh mutasi.
-- **Harga:** bisa berbeda per pelanggan, per hari, grosir/eceran. Urutan harga otomatis di nota: harga khusus pelanggan → harga grosir/eceran sesuai tipe pelanggan. Ada petunjuk "harga terakhir" ke pelanggan itu.
+- **Harga:** satu **Harga jual** per satuan (opsi grosir/eceran dihapus Okt 2026; nilai lama diambil dari harga grosir). Urutan harga otomatis di nota: harga khusus pelanggan → harga jual. Ada petunjuk "harga terakhir" ke pelanggan itu.
 - **Satuan ganda:** dus, pcs, kg, dll. dengan konversi ke satuan dasar (`factor`).
 - **Pelanggan awal:** 10 dapur SPPG (dari Excel pemilik; kolom di Excel berjudul "Supplier" tetapi isinya pelanggan).
 - **TTD + paraf:** `public/ttd.webp` (logo TP + tanda tangan), bisa diganti di menu Pengaturan (disimpan ke Storage bucket `branding`). **Wajib tampil di setiap nota.**
@@ -154,7 +154,7 @@ public/ttd.webp         TTD + paraf bawaan
 | `categories` | name |
 | `products` | sku, name, category_id, base_unit, **avg_cost** (HPP/satuan dasar), min_stock, active |
 | `product_units` | product_id, unit, factor, price_retail, price_wholesale (trigger → `price_history`) |
-| `customers` | name, price_type (eceran/grosir), phone, address, term_days |
+| `customers` | name, price_type (tidak dipakai lagi, selalu grosir), phone, address, term_days |
 | `customer_prices` | harga khusus per pelanggan/produk/satuan |
 | `suppliers` | name, contact, phone, address, bank_info |
 | `sales` / `sale_items` | header nota / item (`warehouse_id`, `cost_per_base` = HPP saat transaksi, `active`) |
@@ -174,6 +174,9 @@ Tipe mutasi: `opening, purchase, sale, sale_return, purchase_return, adjust, tra
 |---|---|
 | `save_sale(p jsonb)` | buat/ubah nota. `p.id` kosong = baru. Item: `{product_id,name,qty,unit,factor,price,warehouse_id}`. Juga `discount, shipping, tax_percent, paid_now, payment_method, due_date, notes, customer_id, customer_name, date` |
 | `save_purchase(p jsonb)` | buat/koreksi barang masuk, lalu `recompute_avg_cost` |
+| `resolve_new(p, kind)` | kind sale/purchase/return/delivery: cari pelanggan/supplier & barang berdasar nama (tanpa beda huruf besar/kecil), buat jika belum ada. Barang baru: satuan diketik, isi 1, harga jual = harga nota. Tiga Putra: barang baru di nota diberi mutasi `opening` sejumlah yang dijual |
+| `save_sale_ex` / `save_purchase_ex` / `save_return_ex` | `resolve_new` + fungsi asli (dipakai UI; retur dari dokumen tetap `save_return`) |
+| `save_delivery_note(p jsonb)` | Surat Jalan tanpa nota (buat/ubah), nomor otomatis `SJ/…` bila kosong, tidak mengurangi stok |
 | `cancel_document(kind, id)` | batal nota (`sale`) / barang masuk (`purchase`) |
 | `save_return(p jsonb)` / `void_return(id)` | retur / batalkan retur |
 | `save_adjustment(p jsonb)` | `type`: `opening` (stok awal + harga), `adjust` (opname, qty = selisih), `transfer` (`warehouse_id` → `to_warehouse_id`) |
@@ -241,8 +244,10 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 
 - (PR berikutnya) Tampilan ramah iPad: menu ☰ di bawah 1024px, isian barang berbentuk kartu, bar Simpan bawah, kolom isian 16px/44px untuk layar sentuh.
 - (PR #9) WhatsApp Nota & Surat Jalan kirim file PDF (menu Bagikan), Unduh PDF langsung, hapus header/footer cetak & baris "Nota: …" di Surat Jalan.
+- (PR #11) Cap & paraf digambar langsung ke kanvas PDF (hilang di Safari iPad).
+- (Okt 2026) Opsi grosir/eceran dihapus (1 harga jual); pelanggan/supplier/barang baru bisa diketik langsung (`NameCombo`, `ItemsEditor allowNew`); setelah pilih barang kursor ke Jumlah → Enter Harga → Enter kembali ke cari barang; Surat Jalan tanpa nota (menu Surat Jalan → "+ Surat Jalan tanpa nota").
 
-Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan).
+Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan) · `0006_ketik_baru_sj_mandiri` (harga jual tunggal, ketik baru, Surat Jalan tanpa nota).
 
 ---
 

@@ -17,9 +17,10 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 - Gudang: **Gudang 1-P** dan **Gudang 2-R**. Gudang dipilih **per barang** (default gudang pertama = 1-P) di nota, barang masuk, dan retur; satu barang dari 2 gudang = 2 baris. Jika stok kurang: tetap gudang pilihan + peringatan merah (tidak pindah otomatis). Nota cetak **tidak** menampilkan gudang dan menggabungkan baris yang sama (nama/satuan/harga).
 - Nomor nota `INV/YYYY/MM/NNNN` (urut, reset tiap bulan); barang masuk `BM/…`, retur `RJ/…` / `RB/…`
 - PPN belum dipakai (tersedia, default mati). HPP: **rata-rata tertimbang**.
-- Harga bisa beda per pelanggan, per hari, grosir/eceran. Satuan ganda (dus, pcs, kg, …) dengan konversi.
+- **Satu "Harga jual" per satuan** (tidak ada lagi grosir/eceran; kolom `price_retail` = `price_wholesale` selalu diisi sama). Harga khusus per pelanggan & bisa diubah per nota. Satuan ganda (dus, pcs, kg, …) dengan konversi.
 - TTD + paraf (gambar `public/ttd.webp`, bisa diganti di Pengaturan) **wajib tampil di setiap nota**.
-- **Surat Jalan** dibuat dari nota (tabel `delivery_notes`, barang selalu dibaca dari nota sumber, tanpa harga; kendaraan Mobil/Pick-up, nomor B 2914 WFK / R 8287 AM / Z 9016 HB; kanan pakai aset TTD yang sama dengan nota). Detail di catatan.md.
+- **Surat Jalan** dibuat dari nota (tabel `delivery_notes`, barang selalu dibaca dari nota sumber, tanpa harga; kendaraan Mobil/Pick-up, nomor B 2914 WFK / R 8287 AM / Z 9016 HB; kanan pakai aset TTD yang sama dengan nota). Bisa juga **tanpa nota** (`sale_id` null, barang di `delivery_note_items`, nomor `SJ/YYYY/MM/NNNN`, tidak mengurangi stok). Detail di catatan.md.
+- **Ketik baru:** pelanggan/supplier/barang yang belum terdaftar boleh diketik langsung di Nota, Barang Masuk, Retur & Surat Jalan tanpa nota; tersimpan otomatis saat dokumen disimpan (`resolve_new`). Barang baru di nota Tiga Putra otomatis diberi stok awal sejumlah yang dijual (stok tidak boleh minus).
 - Format nota mengikuti contoh pemilik: kop nama "… Supplier", NOMOR kanan atas, Kepada + tanggal, tabel # / NAMA BARANG / JML / SAT / HARGA / JUMLAH, TOTAL, Info Pembayaran A.N., grid rekening, "Hormat kami," + TTD.
 
 ## Keputusan pemilik (jangan diubah tanpa diminta)
@@ -31,7 +32,7 @@ Bahasa tampilan & komunikasi dengan pemilik: **Bahasa Indonesia**. Mata uang Rup
 
 ## Teknis
 - Next.js 16 (App Router, semua halaman client component) + Tailwind 4 + `@supabase/supabase-js`, recharts, exceljs.
-- Logika transaksi di fungsi Postgres: `save_sale`, `save_purchase`, `cancel_document`, `save_return`, `void_return`, `save_adjustment` (stok awal/opname/transfer), `recompute_avg_cost`, `report_sales`, `dashboard_stats`, `next_doc_number`.
+- Logika transaksi di fungsi Postgres: `save_sale`, `save_purchase`, `cancel_document`, `save_return`, `void_return`, `save_adjustment` (stok awal/opname/transfer), `recompute_avg_cost`, `report_sales`, `dashboard_stats`, `next_doc_number`; UI memanggil versi `save_sale_ex` / `save_purchase_ex` / `save_return_ex` (= `resolve_new` lalu fungsi asli) dan `save_delivery_note`.
 - Stok = jumlah `stock_movements` (non-void) per produk per gudang (view `v_stock`, `v_products`).
 - Struktur: `app/(app)/*` halaman, `components/` (Invoice.tsx = tampilan nota), `lib/`.
 - Cek sebelum push: `npx tsc --noEmit && npm run build`. Sandbox Claude tidak bisa membuka vercel.app/supabase.co langsung; verifikasi DB lewat MCP `execute_sql` dalam transaksi (`begin; set local role anon; …`) tanpa commit.
