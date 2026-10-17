@@ -247,6 +247,7 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 - (PR #11) Cap & paraf digambar langsung ke kanvas PDF (hilang di Safari iPad).
 - (Okt 2026) Layout Nota & Surat Jalan khas Tiga Putra: versi pertama (banyak kotak/warna) dinilai terlalu ramai → pemilik memilih **Opsi B** dari 4 pratinjau (judul tabel & TOTAL biru muda, kata NOTA biru kanan atas, putih bersih). Kelas CSS `tp-*`.
 - (Okt 2026) Opsi grosir/eceran dihapus (1 harga jual); pelanggan/supplier/barang baru bisa diketik langsung (`NameCombo`, `ItemsEditor allowNew`); setelah pilih barang kursor ke Jumlah → Enter Harga → Enter kembali ke cari barang; Surat Jalan tanpa nota (menu Surat Jalan → "+ Surat Jalan tanpa nota").
+- (17 Okt 2026) Detail nota: tombol **‹ Sebelumnya / Berikutnya ›** + "Nota X dari Y" mengikuti daftar nota yang sedang dibuka (filter tanggal/status/cari disimpan di sessionStorage oleh halaman daftar; `lib/notaNav.ts`, `components/NotaNav.tsx`). Urutan = urutan daftar (terbaru di atas); Berikutnya = baris di bawahnya; berputar di ujung. Bila nota dibuka dari halaman lain, memakai semua nota. Fitur sama di Nota Wibowo.
 
 Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan) · `0006_ketik_baru_sj_mandiri` (harga jual tunggal, ketik baru, Surat Jalan tanpa nota).
 
