@@ -183,6 +183,7 @@ Tipe mutasi: `opening, purchase, sale, sale_return, purchase_return, adjust, tra
 | `recompute_avg_cost(product)` | putar ulang mutasi untuk HPP rata-rata tertimbang |
 | `report_sales(from, to, group)` | group: day, month, product, category, customer, warehouse |
 | `dashboard_stats()` | angka dashboard |
+| `customer_stats()` / `supplier_stats()` | omzet, piutang, jumlah nota per pelanggan / total, hutang, tanggal terakhir per supplier (nota aktif saja); dipakai halaman Pelanggan & Supplier |
 | `next_doc_number(prefix, date)` | nomor dokumen |
 | `default_warehouse()` | gudang kode terkecil |
 | `trg_stock_guard()` | constraint trigger `stock_nonnegative` (DEFERRABLE INITIALLY DEFERRED) |
@@ -248,8 +249,9 @@ Ambil definisi terbaru: `select pg_get_functiondef('public.save_sale(jsonb)'::re
 - (Okt 2026) Layout Nota & Surat Jalan khas Tiga Putra: versi pertama (banyak kotak/warna) dinilai terlalu ramai → pemilik memilih **Opsi B** dari 4 pratinjau (judul tabel & TOTAL biru muda, kata NOTA biru kanan atas, putih bersih). Kelas CSS `tp-*`.
 - (Okt 2026) Opsi grosir/eceran dihapus (1 harga jual); pelanggan/supplier/barang baru bisa diketik langsung (`NameCombo`, `ItemsEditor allowNew`); setelah pilih barang kursor ke Jumlah → Enter Harga → Enter kembali ke cari barang; Surat Jalan tanpa nota (menu Surat Jalan → "+ Surat Jalan tanpa nota").
 - (17 Okt 2026) Detail nota: tombol **‹ Sebelumnya / Berikutnya ›** + "Nota X dari Y" mengikuti daftar nota yang sedang dibuka (filter tanggal/status/cari disimpan di sessionStorage oleh halaman daftar; `lib/notaNav.ts`, `components/NotaNav.tsx`). Urutan = urutan daftar (terbaru di atas); Berikutnya = baris di bawahnya; berputar di ujung. Bila nota dibuka dari halaman lain, memakai semua nota. Fitur sama di Nota Wibowo.
+- (5 Nov 2026) Optimalisasi kecepatan (kedua website, sama): (1) halaman Pelanggan & Supplier tidak lagi mengunduh semua nota/pembelian; omzet/piutang/hutang dihitung di database lewat `customer_stats()` / `supplier_stats()` (migrasi `0010_statistik_dan_indeks`, juga menambah indeks relasi); riwayat pembelian supplier baru diambil saat jendelanya dibuka. (2) Daftar barang/pelanggan/supplier untuk **formulir** disimpan sementara 30 detik (`cached()` di `lib/supabase.ts`, `loadProducts(false, true)`), otomatis dikosongkan setiap ada penulisan ke database; halaman yang menampilkan angka stok (Stok, Barang) tetap selalu segar. (3) `loadStockAll` tidak mengunduh baris stok 0 (penampil menganggap yang tidak ada = 0): Wibowo 1.636 baris/190 kB menjadi 93 baris/11 kB, satu permintaan. (4) Grafik (recharts) dimuat belakangan: JS Dashboard sebelum halaman siap 1.063 KB menjadi 718 KB. (5) Kotak angka (`NumInput`/`DecInput` di `components/ui.tsx`) menerima desimal dengan koma atau titik (0,5) di HP/iPad. Tidak dikerjakan: pengambilan data >1000 baris secara paralel (`fetchAll` tetap berurutan; manfaat kecil dan tidak bisa diuji tanpa data besar).
 
-Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan) · `0006_ketik_baru_sj_mandiri` (harga jual tunggal, ketik baru, Surat Jalan tanpa nota).
+Migrasi database: `0001_init` (skema awal) · `0002_open_access_ledger` (tanpa login + void) · `0003_stock_guard` (stok tidak minus) · `0004_item_warehouse` (gudang per item) · `0005_delivery_notes` (Surat Jalan) · `0006_ketik_baru_sj_mandiri` (harga jual tunggal, ketik baru, Surat Jalan tanpa nota) · `0008`/`0008b` satuan standar · `0009_dashboard_report` · `0010_statistik_dan_indeks` (statistik pelanggan/supplier + indeks).
 
 ---
 
