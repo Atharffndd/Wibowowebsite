@@ -2,6 +2,7 @@
 
 import { normalizeUnit } from "@/lib/units";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { LineItem, Product, Warehouse } from "@/lib/types";
 import type { StockAll } from "@/lib/hooks";
 import { num, qty as fq, rp } from "@/lib/format";
@@ -20,6 +21,7 @@ export function ProductSearch({
   onNew,
   inputRef,
   placeholder = "Cari & tambah barang… (ketik nama / kode)",
+  dropUp = false,
 }: {
   products: Product[];
   onPick: (p: Product) => void;
@@ -27,6 +29,8 @@ export function ProductSearch({
   onNew?: (name: string) => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   placeholder?: string;
+  /** daftar pilihan membuka ke atas (untuk kotak di bawah daftar barang, agar tidak tertutup keyboard) */
+  dropUp?: boolean;
 }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -87,10 +91,10 @@ export function ProductSearch({
             else if (canNew) pickNew();
           }
         }}
-        className="w-full rounded-lg border border-brand/40 bg-brand-soft/40 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+        className="w-full scroll-mb-28 rounded-lg border border-brand/40 bg-brand-soft/40 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
       />
       {open && total > 0 && (
-        <div className="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-line bg-white shadow-lg">
+        <div className={cx("absolute z-20 w-full max-h-72 overflow-y-auto rounded-lg border border-line bg-white shadow-lg", dropUp ? "bottom-full mb-1" : "mt-1")}>
           {results.map((p, i) => (
             <button
               type="button"
@@ -175,7 +179,20 @@ export function ItemsEditor({
 
   // Setelah memilih barang: kursor langsung ke Jumlah → Enter ke Harga → Enter kembali ke pencarian
   const searchRef = useRef<HTMLInputElement>(null);
+  const bottomRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  // kotak pencarian yang terakhir dipakai: setelah Harga + Enter, kursor kembali ke sana (bukan selalu ke atas)
+  const lastBox = useRef<"top" | "bottom">("top");
+  const [bottomOpen, setBottomOpen] = useState(false);
+  useEffect(() => {
+    if (items.length === 0) setBottomOpen(false);
+  }, [items.length]);
+  function openBottom() {
+    lastBox.current = "bottom";
+    flushSync(() => setBottomOpen(true)); // fokus di dalam ketukan yang sama agar keyboard iPad terbuka
+    bottomRef.current?.focus();
+    bottomRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
   const [focusKey, setFocusKey] = useState<string | null>(null);
   useEffect(() => {
     if (!focusKey) return;
@@ -197,7 +214,7 @@ export function ItemsEditor({
     const isNew = !it.product_id;
     if (from === "qty" && isNew) return focusField("unit", it.key);
     if ((from === "qty" || from === "unit") && showPrice) return focusField("price", it.key);
-    searchRef.current?.focus();
+    (lastBox.current === "bottom" ? bottomRef : searchRef).current?.focus();
   };
   const onEnter = (from: "qty" | "unit" | "price", it: LineItem) => (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -235,7 +252,13 @@ export function ItemsEditor({
 
   return (
     <div className="space-y-3" ref={boxRef}>
-      <ProductSearch products={products} onPick={add} onNew={allowNew ? addNew : undefined} inputRef={searchRef} placeholder={allowNew ? "Cari / ketik nama barang… (barang baru boleh)" : undefined} />
+      <ProductSearch
+        products={products}
+        onPick={(p) => ((lastBox.current = "top"), add(p))}
+        onNew={allowNew ? (n) => ((lastBox.current = "top"), addNew(n)) : undefined}
+        inputRef={searchRef}
+        placeholder={allowNew ? "Cari / ketik nama barang… (barang baru boleh)" : undefined}
+      />
       <datalist id="unit-options">
         {unitOptions.map((u) => (
           <option key={u} value={u} />
@@ -355,6 +378,24 @@ export function ItemsEditor({
               </div>
             );
           })}
+        </div>
+      )}
+      {items.length > 0 && (
+        <div>
+          {bottomOpen ? (
+            <ProductSearch
+              products={products}
+              onPick={(p) => ((lastBox.current = "bottom"), add(p))}
+              onNew={allowNew ? (n) => ((lastBox.current = "bottom"), addNew(n)) : undefined}
+              inputRef={bottomRef}
+              placeholder={allowNew ? "Cari / ketik nama barang… (barang baru boleh)" : undefined}
+              dropUp
+            />
+          ) : (
+            <Button type="button" variant="secondary" className="w-full" onClick={openBottom}>
+              + Tambah Barang
+            </Button>
+          )}
         </div>
       )}
       {items.length === 0 && <div className="text-sm text-muted text-center py-6 border border-dashed border-line rounded-lg">Belum ada barang. Cari barang di atas untuk menambahkan.</div>}
