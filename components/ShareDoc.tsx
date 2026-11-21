@@ -13,6 +13,7 @@ export function ShareDoc({
   fileName,
   caption,
   waText,
+  summary,
   phone,
   printLabel = "🖨 Cetak",
 }: {
@@ -22,17 +23,37 @@ export function ShareDoc({
   caption: string;
   /** teks lengkap untuk "Kirim teks saja" / fallback */
   waText: string;
+  /**
+   * Rangkuman singkat. Di Android, WhatsApp membuang teks yang dikirim bersama file, jadi rangkuman
+   * dikirim sebagai pesan kedua (tombol "Kirim rangkuman"). Tanpa ini, perilaku tidak berubah.
+   */
+  summary?: string;
   phone?: string | null;
   printLabel?: string;
 }) {
   const [busy, setBusy] = useState<"pdf" | "wa" | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [shared, setShared] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const waLink = () => {
+  const waLink = (text = waText) => {
     const to = (phone ?? "").replace(/\D/g, "").replace(/^0/, "62");
-    return `https://wa.me/${to}?text=${encodeURIComponent(waText)}`;
+    return `https://wa.me/${to}?text=${encodeURIComponent(text)}`;
   };
+  // Android: teks yang menyertai file tidak ikut terkirim → rangkuman dikirim sebagai pesan kedua
+  const splitFlow = !!summary && typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
+
+  async function copySummary() {
+    if (!summary) return;
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("Tidak bisa menyalin. Tekan lama pada teks rangkuman lalu pilih Salin.");
+    }
+  }
 
   async function makePdf() {
     if (!docRef.current) throw new Error("Dokumen belum siap");
@@ -54,6 +75,7 @@ export function ShareDoc({
   async function onWhatsApp() {
     setBusy("wa");
     setError(null);
+    setShared(false);
     try {
       setFile(await makePdf());
     } catch (e) {
@@ -67,8 +89,9 @@ export function ShareDoc({
     if (!file) return;
     try {
       // Dipanggil langsung dari ketukan tombol (syarat Safari iPad)
-      await navigator.share({ files: [file], title: fileName, text: caption });
-      setFile(null);
+      await navigator.share(splitFlow ? { files: [file], title: fileName } : { files: [file], title: fileName, text: caption });
+      if (splitFlow) setShared(true);
+      else setFile(null);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return; // dibatalkan pengguna
       setError("Tidak bisa membuka menu Bagikan. Gunakan Unduh PDF lalu lampirkan di WhatsApp.");
@@ -98,7 +121,22 @@ export function ShareDoc({
                 <div className="text-xs text-muted">{Math.max(1, Math.round(file.size / 1024))} KB · PDF siap dikirim</div>
               </div>
             </div>
-            {shareable ? (
+            {shareable && splitFlow ? (
+              <>
+                <Button className="w-full py-3 text-base" variant={shared ? "secondary" : "primary"} onClick={share}>
+                  {shared ? "✓ PDF dibagikan (bagikan lagi)" : "1. 📤 Bagikan PDF"}
+                </Button>
+                <p className="text-xs text-muted">Pada menu Bagikan, pilih <b>WhatsApp</b> lalu pilih kontak/grup. File PDF otomatis terlampir.</p>
+                <div className="whitespace-pre-line rounded-lg border border-line bg-slate-50 px-3 py-2">{summary}</div>
+                <Button className="w-full py-3 text-base" variant={shared ? "primary" : "secondary"} onClick={() => window.open(waLink(summary), "_blank")}>
+                  2. 💬 Kirim rangkuman
+                </Button>
+                <button className="text-brand text-sm hover:underline" onClick={copySummary}>
+                  {copied ? "✓ Tersalin" : "Salin rangkuman"}
+                </button>
+                <p className="text-xs text-muted">Di Android, teks tidak ikut terkirim bersama file, jadi rangkuman dikirim sebagai pesan kedua ke chat yang sama.</p>
+              </>
+            ) : shareable ? (
               <>
                 <Button className="w-full py-3 text-base" onClick={share}>
                   📤 Bagikan PDF

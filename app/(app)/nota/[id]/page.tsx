@@ -55,6 +55,8 @@ export default function NotaDetail() {
   const { sale, items, payments, phone, deliveryNotes } = data;
   const activeSJ = deliveryNotes.filter((d) => d.status === "aktif");
   const remaining = balance(sale);
+  // dua baris yang menyertai PDF di WhatsApp
+  const waSummary = `Nota ${sale.number}${sale.customer_name ? ` (${sale.customer_name})` : ""}\n${settings.company_name} Supplier · Total ${rp(sale.total)}`;
 
   async function cancel() {
     if (!confirm(`Batalkan nota ${sale.number}? Stok akan dikembalikan.`)) return;
@@ -102,7 +104,8 @@ export default function NotaDetail() {
           <ShareDoc
             docRef={docRef}
             fileName={`Nota ${sale.number}`}
-            caption={`Nota ${sale.number} — ${settings.company_name} Supplier · Total ${rp(sale.total)}`}
+            caption={waSummary}
+            summary={waSummary}
             waText={notaWAText()}
             phone={phone}
           />
