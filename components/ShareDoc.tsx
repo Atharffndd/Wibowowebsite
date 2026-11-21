@@ -49,7 +49,6 @@ export function ShareDoc({
     try {
       await navigator.clipboard.writeText(summary);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       setError("Tidak bisa menyalin. Tekan lama pada teks rangkuman lalu pilih Salin.");
     }
@@ -76,6 +75,7 @@ export function ShareDoc({
     setBusy("wa");
     setError(null);
     setShared(false);
+    setCopied(false);
     try {
       setFile(await makePdf());
     } catch (e) {
@@ -87,6 +87,8 @@ export function ShareDoc({
 
   async function share() {
     if (!file) return;
+    // Android: rangkuman ikut tersalin di ketukan yang sama (tidak ditunggu agar izin ketuk untuk menu Bagikan tetap berlaku)
+    if (splitFlow) void copySummary();
     try {
       // Dipanggil langsung dari ketukan tombol (syarat Safari iPad)
       await navigator.share(splitFlow ? { files: [file], title: fileName } : { files: [file], title: fileName, text: caption });
@@ -126,15 +128,18 @@ export function ShareDoc({
                 <Button className="w-full py-3 text-base" variant={shared ? "secondary" : "primary"} onClick={share}>
                   {shared ? "✓ PDF dibagikan (bagikan lagi)" : "1. 📤 Bagikan PDF"}
                 </Button>
-                <p className="text-xs text-muted">Pada menu Bagikan, pilih <b>WhatsApp</b> lalu pilih kontak/grup. File PDF otomatis terlampir.</p>
+                <p className="text-xs text-muted">Pada menu Bagikan, pilih <b>WhatsApp</b> lalu pilih kontak/grup. File PDF otomatis terlampir, dan teks rangkuman di bawah <b>otomatis tersalin</b>.</p>
+                {copied && (
+                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-emerald-800">✓ Rangkuman sudah tersalin. Di WhatsApp, tekan lama pada kolom pesan lalu pilih <b>Tempel</b>.</div>
+                )}
                 <div className="whitespace-pre-line rounded-lg border border-line bg-slate-50 px-3 py-2">{summary}</div>
                 <Button className="w-full py-3 text-base" variant={shared ? "primary" : "secondary"} onClick={() => window.open(waLink(summary), "_blank")}>
                   2. 💬 Kirim rangkuman
                 </Button>
                 <button className="text-brand text-sm hover:underline" onClick={copySummary}>
-                  {copied ? "✓ Tersalin" : "Salin rangkuman"}
+                  {copied ? "✓ Tersalin (salin lagi)" : "Salin rangkuman"}
                 </button>
-                <p className="text-xs text-muted">Di Android, teks tidak ikut terkirim bersama file, jadi rangkuman dikirim sebagai pesan kedua ke chat yang sama.</p>
+                <p className="text-xs text-muted">Di Android, teks tidak ikut terkirim bersama file. Tempel rangkuman yang sudah tersalin, atau kirim sebagai pesan kedua dengan tombol 2.</p>
               </>
             ) : shareable ? (
               <>
